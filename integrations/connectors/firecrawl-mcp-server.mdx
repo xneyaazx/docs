@@ -1,0 +1,103 @@
+---
+title: Firecrawl MCP server
+description: Connect Firecrawl's web scraping and crawling capabilities to your AI workflows via the Model Context Protocol.
+---
+
+The Firecrawl MCP server exposes Firecrawl's scraping, crawling, and search tools directly to AI assistants and agents through the [Model Context Protocol (MCP)](https://modelcontextprotocol.io). Once connected, your AI workflows can extract structured content from any URL without leaving the conversation.
+
+## Prerequisites
+
+- A Firecrawl account and API key — sign up at [firecrawl.dev](https://firecrawl.dev)
+- An MCP-compatible client (Claude Desktop, Cursor, VS Code with MCP support, or similar)
+- Node.js 18 or later (for `npx`-based installation)
+
+## Available tools
+
+| Tool | Description |
+|------|-------------|
+| `scrape` | Extract clean markdown, HTML, or structured data from a single URL |
+| `crawl` | Recursively crawl a site and return content from multiple pages |
+| `search` | Search the web and return markdown-formatted results |
+| `map` | Return all URLs discoverable from a starting URL |
+| `extract` | Pull structured JSON from a page using a schema or natural-language prompt |
+
+## Setup
+
+<Steps>
+  <Step title="Get your Firecrawl API key">
+    Log in to [firecrawl.dev](https://firecrawl.dev), go to **API Keys**, and copy your key. Keep this key private — it grants access to your Firecrawl account.
+  </Step>
+  <Step title="Add the server to your MCP client">
+    The setup method depends on your client. For most clients, add the following to your MCP configuration file:
+
+    ```json
+    {
+      "mcpServers": {
+        "firecrawl": {
+          "command": "npx",
+          "args": ["-y", "firecrawl-mcp"],
+          "env": {
+            "FIRECRAWL_API_KEY": "your-api-key-here"
+          }
+        }
+      }
+    }
+    ```
+
+    Replace `your-api-key-here` with the key you copied in step 1.
+  </Step>
+  <Step title="Locate your config file">
+    Common config file locations by client:
+
+    | Client | Config file path |
+    |--------|-----------------|
+    | Claude Desktop (macOS) | `~/Library/Application Support/Claude/claude_desktop_config.json` |
+    | Claude Desktop (Windows) | `%APPDATA%\Claude\claude_desktop_config.json` |
+    | Cursor | `.cursor/mcp.json` in your project root, or `~/.cursor/mcp.json` globally |
+    | VS Code (Copilot) | `.vscode/mcp.json` in your workspace |
+  </Step>
+  <Step title="Restart your client">
+    Save the config file and restart your MCP client. The Firecrawl tools will appear in the client's tool list once the server starts successfully.
+  </Step>
+</Steps>
+
+## Usage examples
+
+Once connected, you can invoke Firecrawl tools through natural language in your AI assistant:
+
+- **Scrape a page** — "Scrape the content from this URL and summarize it."
+- **Crawl a site** — "Crawl the docs at this URL and find all pages that mention authentication."
+- **Search the web** — "Search for the latest news about model context protocol and return the results."
+- **Map a site** — "Map all the URLs on this website so I can understand its structure."
+- **Extract structured data** — "Extract the product name, price, and availability from this page as JSON."
+
+## Configuration options
+
+You can customize the server's behavior by adding environment variables to the `env` block in your config:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `FIRECRAWL_API_KEY` | — | **Required.** Your Firecrawl API key. |
+| `FIRECRAWL_API_URL` | `https://api.firecrawl.dev` | Override to point at a self-hosted Firecrawl instance. |
+
+## Self-hosted Firecrawl
+
+If you're running a self-hosted Firecrawl instance, set `FIRECRAWL_API_URL` to your instance's base URL:
+
+```json
+"env": {
+  "FIRECRAWL_API_KEY": "your-api-key-here",
+  "FIRECRAWL_API_URL": "https://firecrawl.yourdomain.com"
+}
+```
+
+## Troubleshooting
+
+**The tools don't appear in my client.**
+Confirm Node.js 18+ is installed (`node --version`) and that the config file is valid JSON. Check your client's logs for server startup errors.
+
+**Scrape or crawl requests fail with an auth error.**
+Verify your `FIRECRAWL_API_KEY` value is correct and hasn't been rotated. Generate a new key in the Firecrawl dashboard if needed.
+
+**Crawl jobs time out on large sites.**
+Large crawls run asynchronously. Increase the crawl `limit` parameter to cap the number of pages, or split the crawl across multiple tool calls targeting specific sub-paths.

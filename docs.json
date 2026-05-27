@@ -71,6 +71,7 @@
           "integrations/quickstart",
           "integrations/authentication",
           "integrations/connectors/crm",
+          "integrations/connectors/firecrawl-mcp-server",
           "integrations/webhooks/configure"
         ]
       }
