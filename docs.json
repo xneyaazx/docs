@@ -73,6 +73,7 @@
           "integrations/connectors/crm",
           "integrations/connectors/firecrawl-mcp-server",
           "integrations/connectors/playwright-mcp",
+          "integrations/connectors/glif-mcp-server",
           "integrations/webhooks/configure"
         ]
       }
