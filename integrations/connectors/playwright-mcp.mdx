@@ -1,0 +1,130 @@
+---
+title: Playwright MCP server
+description: Give AI assistants full browser automation capabilities through the Model Context Protocol.
+---
+
+The Playwright MCP server lets AI assistants control a real browser — navigating pages, clicking elements, filling forms, taking screenshots, and extracting content — all through the [Model Context Protocol (MCP)](https://modelcontextprotocol.io). It's built on [Microsoft Playwright](https://playwright.dev), so it supports Chromium, Firefox, and WebKit.
+
+## Prerequisites
+
+- An MCP-compatible client (Claude Desktop, Cursor, VS Code with MCP support, or similar)
+- Node.js 18 or later
+
+No API key is required. The server launches and controls a local browser process.
+
+## Available tools
+
+| Tool | Description |
+|------|-------------|
+| `browser_navigate` | Go to a URL |
+| `browser_click` | Click an element identified by a CSS selector or text |
+| `browser_type` | Type text into a focused input or element |
+| `browser_fill` | Fill a form field with a value |
+| `browser_screenshot` | Capture a screenshot of the current page or a specific element |
+| `browser_snapshot` | Return the page's accessibility tree as structured text |
+| `browser_wait_for` | Wait for an element, URL change, or network idle |
+| `browser_evaluate` | Run arbitrary JavaScript in the page context |
+| `browser_select` | Select an option from a `<select>` element |
+| `browser_hover` | Hover over an element |
+| `browser_close` | Close the current page or browser context |
+
+## Setup
+
+<Steps>
+  <Step title="Add the server to your MCP client">
+    Add the following to your MCP configuration file:
+
+    ```json
+    {
+      "mcpServers": {
+        "playwright": {
+          "command": "npx",
+          "args": ["-y", "@playwright/mcp"]
+        }
+      }
+    }
+    ```
+  </Step>
+  <Step title="Locate your config file">
+    Common config file locations by client:
+
+    | Client | Config file path |
+    |--------|-----------------|
+    | Claude Desktop (macOS) | `~/Library/Application Support/Claude/claude_desktop_config.json` |
+    | Claude Desktop (Windows) | `%APPDATA%\Claude\claude_desktop_config.json` |
+    | Cursor | `.cursor/mcp.json` in your project root, or `~/.cursor/mcp.json` globally |
+    | VS Code (Copilot) | `.vscode/mcp.json` in your workspace |
+  </Step>
+  <Step title="Restart your client">
+    Save the config file and restart your MCP client. On first use, Playwright will automatically download the required browser binaries if they are not already installed.
+  </Step>
+</Steps>
+
+## Usage examples
+
+Once connected, you can drive the browser through natural language:
+
+- **Navigate and read** — "Go to this URL and tell me what's on the page."
+- **Fill and submit a form** — "Fill in the login form with these credentials and submit it."
+- **Capture a screenshot** — "Take a screenshot of the page and show me what it looks like."
+- **Extract data** — "Open this product page and return the title, price, and description as JSON."
+- **Automated testing** — "Click the Sign Up button, complete the registration form, and confirm the success message appears."
+- **Multi-step workflows** — "Log in, navigate to the reports section, and download the CSV export."
+
+## Configuration options
+
+Pass additional arguments in the `args` array to customize behavior:
+
+| Flag | Description |
+|------|-------------|
+| `--browser chromium` | Use Chromium (default) |
+| `--browser firefox` | Use Firefox |
+| `--browser webkit` | Use WebKit (Safari engine) |
+| `--headless` | Run without a visible browser window (default in most environments) |
+| `--no-headless` | Show the browser window — useful for debugging |
+| `--viewport 1280x720` | Set the default viewport size |
+| `--user-data-dir /path` | Persist cookies and local storage between sessions |
+
+Example — Firefox in headed mode with a custom viewport:
+
+```json
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "-y", "@playwright/mcp",
+        "--browser", "firefox",
+        "--no-headless",
+        "--viewport", "1440x900"
+      ]
+    }
+  }
+}
+```
+
+## Persisting browser state
+
+By default each session starts with a fresh browser context. To reuse cookies and storage (for example, to stay logged in across sessions), set `--user-data-dir` to a writable directory:
+
+```json
+"args": ["-y", "@playwright/mcp", "--user-data-dir", "/home/you/.playwright-mcp-profile"]
+```
+
+<Warning>
+  A persisted profile stores authentication tokens and cookies on disk. Avoid using a shared profile directory across multiple clients or users.
+</Warning>
+
+## Troubleshooting
+
+**Browser binaries are missing.**
+Run `npx playwright install` once to download the required browsers, then restart your client.
+
+**The server starts but no tools appear.**
+Confirm your config file is valid JSON and that the `command` and `args` values match exactly. Check your client's MCP log for error output.
+
+**Actions fail on pages that use heavy JavaScript frameworks.**
+Use `browser_wait_for` before interacting with elements that render asynchronously. Specify a CSS selector or the string `networkidle` to wait for the page to settle.
+
+**Screenshots are blank or show a loading state.**
+The page may not have fully rendered. Add a `browser_wait_for` step targeting a key element before calling `browser_screenshot`.
