@@ -1,0 +1,104 @@
+---
+title: Glif MCP server
+description: Run Glif AI workflows and pipelines directly from your AI assistant via the Model Context Protocol.
+---
+
+The Glif MCP server connects [Glif](https://glif.app) — a platform for building and sharing AI-powered workflows — to MCP-compatible clients. Once connected, your AI assistant can run any Glif workflow by ID, passing inputs and receiving outputs without leaving the conversation.
+
+## Prerequisites
+
+- A Glif account and API token — sign up at [glif.app](https://glif.app)
+- An MCP-compatible client (Claude Desktop, Cursor, VS Code with MCP support, or similar)
+- Node.js 18 or later
+
+## Available tools
+
+| Tool | Description |
+|------|-------------|
+| `run_glif` | Execute a Glif workflow by ID with the provided inputs and return the output |
+| `list_featured_glifs` | Browse featured public workflows from the Glif community |
+| `get_glif` | Fetch metadata and input schema for a specific Glif by ID |
+| `search_glifs` | Search public Glifs by keyword |
+| `my_glifs` | List workflows owned by the authenticated user |
+
+## Setup
+
+<Steps>
+  <Step title="Get your Glif API token">
+    Log in to [glif.app](https://glif.app), open **Settings → API**, and generate a token. Copy it — you won't be able to see it again after leaving the page.
+  </Step>
+  <Step title="Add the server to your MCP client">
+    Add the following to your MCP configuration file:
+
+    ```json
+    {
+      "mcpServers": {
+        "glif": {
+          "command": "npx",
+          "args": ["-y", "glif-mcp"],
+          "env": {
+            "GLIF_API_TOKEN": "your-api-token-here"
+          }
+        }
+      }
+    }
+    ```
+
+    Replace `your-api-token-here` with the token you copied in step 1.
+  </Step>
+  <Step title="Locate your config file">
+    Common config file locations by client:
+
+    | Client | Config file path |
+    |--------|-----------------|
+    | Claude Desktop (macOS) | `~/Library/Application Support/Claude/claude_desktop_config.json` |
+    | Claude Desktop (Windows) | `%APPDATA%\Claude\claude_desktop_config.json` |
+    | Cursor | `.cursor/mcp.json` in your project root, or `~/.cursor/mcp.json` globally |
+    | VS Code (Copilot) | `.vscode/mcp.json` in your workspace |
+  </Step>
+  <Step title="Restart your client">
+    Save the config file and restart your MCP client. The Glif tools will appear in the tool list once the server connects successfully.
+  </Step>
+</Steps>
+
+## Usage examples
+
+Once connected, you can run Glif workflows through natural language:
+
+- **Run a workflow** — "Run Glif `abc123` with the prompt 'a futuristic city at sunset' and show me the result."
+- **Discover workflows** — "Search for Glifs related to image generation and show me the top results."
+- **Inspect a workflow** — "What inputs does Glif `xyz789` require?"
+- **List your workflows** — "Show me all the Glifs I've created."
+- **Chain outputs** — "Run this image-generation Glif, then pass the output image URL to this captioning Glif."
+
+## Configuration options
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `GLIF_API_TOKEN` | — | **Required.** Your Glif API token. |
+
+## Finding Glif IDs
+
+Every Glif has a unique ID visible in its URL on glif.app:
+
+```
+https://glif.app/@username/glifs/abc123def456
+                                  ^^^^^^^^^^^^
+                                  This is the Glif ID
+```
+
+You can also use the `search_glifs` or `list_featured_glifs` tools to discover IDs without leaving your client.
+
+## Troubleshooting
+
+**Tools don't appear after restarting the client.**
+Confirm Node.js 18+ is installed (`node --version`) and the config file is valid JSON. Check your client's MCP log for startup errors.
+
+**`run_glif` returns an authentication error.**
+Verify `GLIF_API_TOKEN` is set correctly and hasn't expired. Generate a new token from the Glif dashboard if needed.
+
+**A workflow run times out.**
+Some Glif workflows involve multiple chained AI steps and can take longer to complete. Check the expected runtime on the Glif's page and allow enough time for complex pipelines.
+
+**Outputs are URLs rather than inline content.**
+Glifs that produce images or files return URLs pointing to the generated assets. Pass those URLs to a downstream tool (such as the Playwright or Firecrawl MCP servers) to fetch or display the content.
