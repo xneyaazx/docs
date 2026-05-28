@@ -1,0 +1,101 @@
+---
+title: Hugging Face MCP server
+description: Search models, run inference, and interact with the Hugging Face Hub from your AI assistant via the Model Context Protocol.
+---
+
+The Hugging Face MCP server connects the [Hugging Face Hub](https://huggingface.co) to MCP-compatible clients. Your AI assistant can search models and datasets, run serverless inference, read dataset contents, and retrieve model metadata — all without leaving the conversation.
+
+## Prerequisites
+
+- A Hugging Face account and access token — sign up at [huggingface.co](https://huggingface.co)
+- An MCP-compatible client (Claude Desktop, Cursor, VS Code with MCP support, or similar)
+- Node.js 18 or later
+
+## Available tools
+
+| Tool | Description |
+|------|-------------|
+| `search_models` | Search the Hub for models by keyword, task, or library |
+| `get_model` | Fetch metadata, tags, and card content for a specific model |
+| `list_model_files` | List files available in a model repository |
+| `search_datasets` | Search the Hub for datasets by keyword or task |
+| `get_dataset` | Fetch metadata and card content for a specific dataset |
+| `run_inference` | Run serverless inference on a model with a given input |
+| `list_spaces` | Browse Hugging Face Spaces by keyword or SDK |
+| `get_space` | Fetch metadata and status for a specific Space |
+
+## Setup
+
+<Steps>
+  <Step title="Get your Hugging Face access token">
+    Log in to [huggingface.co](https://huggingface.co), go to **Settings → Access Tokens**, and create a new token. A **Read** token is sufficient for searching and inference. Use a **Write** token only if you need to push files to the Hub.
+  </Step>
+  <Step title="Add the server to your MCP client">
+    Add the following to your MCP configuration file:
+
+    ```json
+    {
+      "mcpServers": {
+        "huggingface": {
+          "command": "npx",
+          "args": ["-y", "@huggingface/mcp-server"],
+          "env": {
+            "HF_TOKEN": "your-access-token-here"
+          }
+        }
+      }
+    }
+    ```
+
+    Replace `your-access-token-here` with the token you copied in step 1.
+  </Step>
+  <Step title="Locate your config file">
+    Common config file locations by client:
+
+    | Client | Config file path |
+    |--------|-----------------|
+    | Claude Desktop (macOS) | `~/Library/Application Support/Claude/claude_desktop_config.json` |
+    | Claude Desktop (Windows) | `%APPDATA%\Claude\claude_desktop_config.json` |
+    | Cursor | `.cursor/mcp.json` in your project root, or `~/.cursor/mcp.json` globally |
+    | VS Code (Copilot) | `.vscode/mcp.json` in your workspace |
+  </Step>
+  <Step title="Restart your client">
+    Save the config file and restart your MCP client. The Hugging Face tools will appear in the tool list once the server connects.
+  </Step>
+</Steps>
+
+## Usage examples
+
+Once connected, you can interact with the Hugging Face Hub through natural language:
+
+- **Find a model** — "Search for the best open-source text-to-image models on Hugging Face."
+- **Run inference** — "Run the `mistralai/Mistral-7B-Instruct-v0.2` model with the prompt 'Explain transformers in one paragraph.'"
+- **Explore a dataset** — "Get the details and card for the `squad` dataset."
+- **Compare models** — "Find the top-downloaded sentiment analysis models and compare their tags and architectures."
+- **Check a Space** — "What is the current status of the `stabilityai/stable-diffusion` Space?"
+
+## Token scopes
+
+| Token type | Use case |
+|------------|---------|
+| **Read** | Search, inference, metadata retrieval — sufficient for most use cases |
+| **Write** | Required only for pushing files or creating repositories on the Hub |
+| **Fine-grained** | Restrict access to specific repos or organizations for tighter security |
+
+<Note>
+  Always use the minimum token scope required. Store your token in the `env` block of your MCP config rather than hardcoding it in prompts or files.
+</Note>
+
+## Troubleshooting
+
+**Tools don't appear after restarting the client.**
+Confirm Node.js 18+ is installed (`node --version`) and the config file is valid JSON. Check your client's MCP log for startup errors.
+
+**Inference requests return a 401 or 403 error.**
+Verify `HF_TOKEN` is set correctly. Some models are gated and require you to accept the model's license on the Hub before your token can access them.
+
+**A gated model returns an access error.**
+Visit the model's page on [huggingface.co](https://huggingface.co), accept the access agreement, then retry the request.
+
+**Inference is slow or times out.**
+Serverless inference cold-starts can take 20–30 seconds for large models. Retry after a short wait, or use a model that is already warm (indicated by a green dot on its Hub page).
